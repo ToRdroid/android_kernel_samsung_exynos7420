@@ -3875,6 +3875,7 @@ static struct task_struct *find_process_by_pid(pid_t pid)
 }
 
 extern struct cpumask hmp_slow_cpu_mask;
+extern struct cpumask hmp_fast_cpu_mask;
 
 /* Actually do priority change: must hold rq lock. */
 static void
@@ -3889,11 +3890,15 @@ __setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
 		p->sched_class = &rt_sched_class;
 #ifdef CONFIG_SCHED_HMP
 		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
+			do_set_cpus_allowed(p, &hmp_fast_cpu_mask);
+#endif
+	} else {
+		p->sched_class = &fair_sched_class;
+#ifdef CONFIG_SCHED_HMP
+		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
 			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
 #endif
 	}
-	else
-		p->sched_class = &fair_sched_class;
 	set_load_weight(p);
 }
 
